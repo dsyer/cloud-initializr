@@ -1,0 +1,8 @@
+---
+applications:
+- name: cloud-start
+  memory: 1024M
+  instances: 1
+  host: cloud-start-development
+  domain: cfapps.io
+  path: .
