@@ -95,10 +95,8 @@ cloud:
           groupId: ${cloud.groupId}
           artifactId: ${cloud.artifactId}-security
   bootVersions:
-    - name : Latest SNAPSHOT
-      id: 1.2.2.BUILD-SNAPSHOT
-      default: false
     - name: 1.2.1
       id: 1.2.1.RELEASE
+      cloudVersionRange: 1.0.0.RC3
       default: true
 

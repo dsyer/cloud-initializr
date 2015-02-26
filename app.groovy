@@ -2,8 +2,10 @@ package app
 
 import io.spring.initializr.*
 import io.spring.initializr.web.*
+import io.spring.initializr.support.*
 import io.spring.initializr.InitializrMetadata.BootVersion
 import io.spring.initializr.InitializrMetadata.DependencyGroup
+import io.spring.initializr.InitializrMetadata.Dependency
 import groovy.util.logging.Slf4j
 
 @Grab('io.spring.initalizr:initializr:1.0.0.BUILD-SNAPSHOT')
@@ -24,14 +26,38 @@ class InitializerService {
     new InitializrMetadataCustomizer() {
       @Override
       void customize(InitializrMetadata metadata) {
+        metadata.bootVersions.clear()
+        metadata.bootVersions.addAll(cloud.versions)
+        metadata.dependencies.each { group ->
+          group.content.each { dependency ->
+            translateRange(dependency, cloud)
+          }
+        }
         metadata.defaults.description = 'Demo project for Spring Cloud'
         log.info("Adding cloud dependencies")
         cloud.dependencies.reverse().each { group -> 
           metadata.dependencies.add(0, group)
         }
-        metadata.bootVersions.clear()
-        metadata.bootVersions.addAll(cloud.bootVersions)
       }
+    }
+  }
+
+  private void translateRange(Dependency dependency, CloudProperties cloud) {
+    if (dependency.versionRange) {
+      /*
+       The logic here only tries to determine a lower bound for the
+       version range, which is adequate in all cases we currently
+       support, but might need to be more sophisticated later
+      */
+      String lowerVersion = InitializrMetadata.getDefault(cloud.versions)  
+      VersionRange bootRange = VersionRange.parse(dependency.versionRange)
+      cloud.bootVersions.each { bootVersion ->
+        if (bootRange.match(Version.parse(bootVersion.id))) {
+          VersionRange cloudRange = VersionRange.parse(bootVersion.cloudVersionRange)
+          lowerVersion = cloudRange.lowerVersion
+        }
+      }
+      dependency.versionRange = lowerVersion
     }
   }
 
@@ -50,7 +76,8 @@ class InitializerService {
     def generator = new ProjectGenerator() {
       protected Map initializeModel(ProjectRequest request) {
         Map map = super.initializeModel(request)
-        map.put('springCloudVersion', request.springCloudVersion ?: InitializrMetadata.getDefault(cloud.versions))
+        map.put('springCloudVersion', request.bootVersion ?: InitializrMetadata.getDefault(cloud.versions))
+        map.put('bootVersion', InitializrMetadata.getDefault(cloud.bootVersions))
         map
       }
     }
@@ -62,11 +89,33 @@ class InitializerService {
 
 @ConfigurationProperties('cloud')
 class CloudProperties {
-	final List<BootVersion> versions = []
-	final List<BootVersion> bootVersions = []
-	final List<DependencyGroup> dependencies = []
-    String groupId
-    String artifactId
+  /**
+   * The versions of Spring Cloud supported by this service
+   */
+  final List<BootVersion> versions = []
+  /**
+   * The versions of Spring Boot supported by various versions of Spring Cloud
+   */
+  final List<CloudBootVersion> bootVersions = []
+  /**
+   * The additional dependencies to be added
+   */
+  final List<DependencyGroup> dependencies = []
+  /**
+   * The group ID for Spring Cloud dependencies
+   */
+  String groupId
+  /**
+   * The default starter dependency if none are provided
+   */
+  String artifactId
+}
+
+class CloudBootVersion extends BootVersion {
+  /**
+   * The range of versions of Spring Cloud supporting this Boot version
+   */
+  String cloudVersionRange
 }
 
 @Controller
