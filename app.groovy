@@ -1,6 +1,7 @@
 package app
 
 import io.spring.initializr.*
+import io.spring.initializr.web.*
 import io.spring.initializr.InitializrMetadata.BootVersion
 
 @Grab('io.spring.initalizr:initializr:1.0.0.BUILD-SNAPSHOT')
@@ -11,6 +12,14 @@ class InitializerService {
 
   @Autowired
   CloudProperties cloud
+
+  @Autowired
+  InitializrMetadata metadata
+
+  @PostConstruct
+  void update() {
+    metadata.defaults.description = 'Demo project for Spring Cloud'
+  }
 
   @Bean
   InitializrMetadataProvider initializrMetadataProvider(InitializrMetadata metadata) {
@@ -27,7 +36,7 @@ class InitializerService {
     def generator = new ProjectGenerator() {
       protected Map initializeModel(ProjectRequest request) {
         Map map = super.initializeModel(request)
-        map.put('springCloudVersion', request.extra.springCloudVersion ?: InitializrMetadata.getDefault(cloud.versions))
+        map.put('springCloudVersion', request.springCloudVersion ?: InitializrMetadata.getDefault(cloud.versions))
         map
       }
     }
@@ -40,4 +49,31 @@ class InitializerService {
 @ConfigurationProperties('cloud')
 class CloudProperties {
 	final List<BootVersion> versions = []
+    String groupId
+    String artifactId
+}
+
+@Controller
+class CloudController extends MainController {
+
+  @Autowired
+  CloudProperties cloud
+
+  @ModelAttribute
+  @Override
+  ProjectRequest projectRequest() {
+    def request = new ProjectRequest() {
+      String springCloudVersion
+      protected addDefaultDependency() {
+		def root = new InitializrMetadata.Dependency()
+		root.id = cloud.artifactId
+        root.groupId = cloud.groupId
+        root.artifactId = cloud.artifactId
+		resolvedDependencies << root
+      }
+    }
+    metadataProvider.get().initializeProjectRequest(request)
+    request
+  }
+
 }
