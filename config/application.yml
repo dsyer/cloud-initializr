@@ -1,0 +1,243 @@
+info:
+  project:
+    name: Spring Start
+    version: 0.3.1
+# remember to update static/install.sh as well:
+  spring-boot:
+    version: 1.2.1.RELEASE
+
+initializr:
+  dependencies:
+    - name: Core
+      content:
+        - name: Security
+          id: security
+          description: Support for spring-security
+        - name: AOP
+          id: aop
+          description: Support for aspect-oriented programming including spring-aop and AspectJ
+        - name: Atomikos (JTA)
+          id: jta-atomikos
+          description: Support for JTA distributed transactions via Atomikos
+          versionRange: 1.2.0.M1
+        - name: Bitronix (JTA)
+          id: jta-bitronix
+          description: Support for JTA distributed transactions via Bitronix
+          versionRange: 1.2.0.M1
+    - name: Web
+      content:
+        - name: Web
+          id: web
+          description: Support for full-stack web development, including Tomcat and spring-webmvc
+          facets:
+            - web
+        - name: Websocket
+          id: websocket
+          description: Support for websocket development with Tomcat
+        - name: WS
+          id: ws
+          description: Support for Spring Web Services
+        - name: Jersey (JAX-RS)
+          id: jersey
+          description: Support for the Jersey RESTful Web Services framework
+          versionRange: 1.2.0.RELEASE
+        - name: Rest Repositories
+          id: data-rest
+          description: Support for exposing Spring Data repositories over REST via spring-data-rest-webmvc
+        - name: HATEOAS
+          id: hateoas
+          description: Support for HATEOAS-based RESTful services
+          versionRange: 1.2.2.BUILD-SNAPSHOT
+        - name: Mobile
+          id: mobile
+          description: Support for spring-mobile
+    - name: Template Engines
+      content:
+        - name: Freemarker
+          id: freemarker
+          description: Support for the FreeMarker templating engine
+          facets:
+            - web
+        - name: Velocity
+          id: velocity
+          description: Support for the Velocity templating engine
+          facets:
+            - web
+        - name: Groovy Templates
+          id: groovy-templates
+          description: Support for the Groovy templating engine
+          facets:
+            - web
+        - name: Thymeleaf
+          id: thymeleaf
+          description: Support for the Thymeleaf templating engine, including integration with Spring
+          facets:
+            - web
+        - name: Mustache
+          id: mustache
+          description: Support for the Mustache templating engine
+          versionRange: 1.2.2.BUILD-SNAPSHOT
+          facets:
+            - web
+    - name: Data
+      content:
+        - name: JDBC
+          id: jdbc
+          description: Support for JDBC databases
+        - name: JPA
+          id: data-jpa
+          description: Support for the Java Persistence API including spring-data-jpa, spring-orm and Hibernate
+          aliases:
+            - jpa
+        - name: MongoDB
+          id: data-mongodb
+          description: Support for the MongoDB NoSQL Database, including spring-data-mongodb
+        - name: Redis
+          id: redis
+          description: Support for the REDIS key-value data store, including spring-redis
+        - name: Gemfire
+          id: data-gemfire
+          description: Support for the GemFire distributed data store including spring-data-gemfire
+        - name: Solr
+          id: data-solr
+          description: Support for the Apache Solr search platform, including spring-data-solr
+        - name: Elasticsearch
+          id: data-elasticsearch
+          description: Support for the Elasticsearch search and analytics engine including spring-data-elasticsearch
+    - name: Database
+      content:
+        - name: H2
+          id: h2
+          description: Support for the H2 database (with embedded support)
+          groupId: com.h2database
+          artifactId: h2
+          scope: runtime
+        - name: HSQLDB
+          id: hsql
+          description: Support for the HSQLDB database (with embedded support)
+          groupId: org.hsqldb
+          artifactId: hsqldb
+          scope: runtime
+        - name: Apache Derby
+          id: derby
+          description: Support for the Apache Derby database (with embedded support)
+          groupId: org.apache.derby
+          artifactId: derby
+          scope: runtime
+          versionRange: 1.2.2.BUILD-SNAPSHOT
+        - name: MySQL
+          id: mysql
+          description: Support for the MySQL jdbc driver
+          groupId: mysql
+          artifactId: mysql-connector-java
+          scope: runtime
+    - name: Social
+      content:
+        - name: Facebook
+          id: social-facebook
+          description: Support for spring-social-facebook
+        - name: LinkedIn
+          id: social-linkedin
+          description: Support for spring-social-linkedin
+        - name: Twitter
+          id: social-twitter
+          description: Support for spring-social-twitter
+    - name: I/O
+      content:
+        - name: Batch
+          id: batch
+          description: Support for Spring Batch including HSQLDB database
+        - name: Integration
+          id: integration
+          description: Support for common spring-integration modules
+        - name: JMS
+          id: hornetq
+          description: Support for Java Message Service API via HornetQ
+        - name: AMQP
+          id: amqp
+          description: Support for the Advanced Message Queuing Protocol via spring-rabbit
+        - name: Mail
+          id: mail
+          description: Support for javax.mail
+          versionRange: 1.2.0.RC1
+    - name: Ops
+      content:
+        - name: Actuator
+          id: actuator
+          description: Production ready features to help you monitor and manage your application
+        - name: Cloud Connectors
+          id: cloud-connectors
+          description: Simplifies connecting to services in cloud platforms
+          versionRange: 1.2.0.RELEASE
+        - name: Remote Shell
+          id: remote-shell
+          description: Support for CRaSH
+  types:
+    - name: Maven POM
+      id: maven-build
+      description: Generate a Maven pom.xml
+      sts-id: pom.xml
+      tags:
+        build: maven
+        format: build
+      default: false
+      action: /pom.xml
+    - name: Maven Project
+      id: maven-project
+      description: Generate a Maven based project archive
+      sts-id: starter.zip
+      tags:
+        build: maven
+        format: project
+      default: true
+      action: /starter.zip
+    - name: Gradle Config
+      id: gradle-build
+      description: Generate a Gradle build file
+      sts-id: build.gradle
+      tags:
+        build: gradle
+        format: build
+      default: false
+      action: /build.gradle
+    - name: Gradle Project
+      id: gradle-project
+      description: Generate a Gradle based project archive
+      sts-id: gradle.zip
+      tags:
+        build: gradle
+        format: project
+      default: false
+      action: /starter.zip
+  packagings:
+    - name: Jar
+      id: jar
+      default: true
+    - name: War
+      id: war
+      default: false
+  javaVersions:
+    - id: 1.6
+      default: false
+    - id: 1.7
+      default: true
+    - id: 1.8
+      default: false
+  languages:
+    - name: Groovy
+      id: groovy
+      default: false
+    - name: Java
+      id: java
+      default: true
+  bootVersions:
+    - name : Latest SNAPSHOT
+      id: 1.2.2.BUILD-SNAPSHOT
+      default: false
+    - name: 1.2.1
+      id: 1.2.1.RELEASE
+      default: true
+    - name: 1.1.10
+      id: 1.1.10.RELEASE
+      default: false
+

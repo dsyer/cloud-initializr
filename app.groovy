@@ -3,8 +3,11 @@ package app
 import io.spring.initializr.*
 import io.spring.initializr.web.*
 import io.spring.initializr.InitializrMetadata.BootVersion
+import io.spring.initializr.InitializrMetadata.DependencyGroup
+import groovy.util.logging.Slf4j
 
 @Grab('io.spring.initalizr:initializr:1.0.0.BUILD-SNAPSHOT')
+@Slf4j
 class InitializerService {
 
   @Autowired
@@ -16,18 +19,29 @@ class InitializerService {
   @Autowired
   InitializrMetadata metadata
 
-  @PostConstruct
-  void update() {
-    metadata.defaults.description = 'Demo project for Spring Cloud'
+  @Bean
+  InitializrMetadataCustomizer initializrMetadataCustomizer() {
+    new InitializrMetadataCustomizer() {
+      @Override
+      void customize(InitializrMetadata metadata) {
+        metadata.defaults.description = 'Demo project for Spring Cloud'
+        log.info("Adding cloud dependencies")
+        cloud.dependencies.reverse().each { group -> 
+          metadata.dependencies.add(0, group)
+        }
+        metadata.bootVersions.clear()
+        metadata.bootVersions.addAll(cloud.bootVersions)
+      }
+    }
   }
 
   @Bean
   InitializrMetadataProvider initializrMetadataProvider(InitializrMetadata metadata) {
-    new DefaultInitializrMetadataProvider(metadata) {
-      protected List<InitializrMetadata.BootVersion> fetchBootVersions() {
-        // Prevent older versions of Boot from being selected
-        []
-      }   
+    new InitializrMetadataProvider() {
+      @Override
+      InitializrMetadata get() {
+        metadata
+      }
     }
   }
 
@@ -49,6 +63,8 @@ class InitializerService {
 @ConfigurationProperties('cloud')
 class CloudProperties {
 	final List<BootVersion> versions = []
+	final List<BootVersion> bootVersions = []
+	final List<DependencyGroup> dependencies = []
     String groupId
     String artifactId
 }
