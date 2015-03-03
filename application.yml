@@ -7,6 +7,7 @@ info:
     version: 1.2.1.RELEASE
 
 cloud:
+  initial-metadata: https://start.spring.io/metadata/service
   groupId: org.springframework.cloud
   artifactId: spring-cloud-starter
   versions:
@@ -16,6 +17,13 @@ cloud:
     - name: 1.0.0.RC3
       id: 1.0.0.RC3
       default: true
+  bootVersions:
+    - name: 1.2.1
+      id: 1.2.1.RELEASE
+      cloudVersionRange: 1.0.0.RC3
+      default: true
+
+initializr:
   dependencies:
     - name: Cloud
       content:
@@ -94,9 +102,4 @@ cloud:
           description: Support for spring-cloud-security
           groupId: ${cloud.groupId}
           artifactId: ${cloud.artifactId}-security
-  bootVersions:
-    - name: 1.2.1
-      id: 1.2.1.RELEASE
-      cloudVersionRange: 1.0.0.RC3
-      default: true
 

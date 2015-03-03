@@ -1,45 +1,45 @@
 package app
 
-import io.spring.initializr.*
-import io.spring.initializr.web.*
-import io.spring.initializr.support.*
-import io.spring.initializr.InitializrMetadata.BootVersion
-import io.spring.initializr.InitializrMetadata.DependencyGroup
-import io.spring.initializr.InitializrMetadata.Dependency
+import io.spring.initializr.generator.*
+import io.spring.initializr.metadata.*
+import io.spring.initializr.util.*
+import io.spring.initializr.web.MainController
 import groovy.util.logging.Slf4j
+
+import org.springframework.core.io.Resource
 
 @Grab('io.spring.initalizr:initializr:1.0.0.BUILD-SNAPSHOT')
 @Slf4j
 class InitializerService {
 
   @Autowired
-  ProjectGenerationMetricsListener metricsListener
-
-  @Autowired
   CloudProperties cloud
 
   @Autowired
-  InitializrMetadata metadata
+  InitializrProperties properties
 
   @Bean
-  InitializrMetadataCustomizer initializrMetadataCustomizer() {
-    new InitializrMetadataCustomizer() {
-      @Override
-      void customize(InitializrMetadata metadata) {
-        metadata.bootVersions.clear()
-        metadata.bootVersions.addAll(cloud.versions)
-        metadata.dependencies.each { group ->
-          group.content.each { dependency ->
-            translateRange(dependency, cloud)
-          }
-        }
-        metadata.defaults.description = 'Demo project for Spring Cloud'
-        log.info("Adding cloud dependencies")
-        cloud.dependencies.reverse().each { group -> 
-          metadata.dependencies.add(0, group)
+  InitializrMetadata initializrMetadata() {
+    InitializrMetadataBuilder builder = InitializrMetadataBuilder.create()
+    if (cloud.initialMetadata) {
+        builder.withInitializrMetadata(cloud.initialMetadata)
+    }
+    builder.withInitializrProperties(properties)
+    builder.withCustomizer { metadata ->
+      metadata.bootVersions.content.clear()
+      metadata.bootVersions.content.addAll(cloud.versions)
+
+      metadata.dependencies.content.each { group ->
+        group.content.each { dependency ->
+          translateRange(dependency, cloud)
         }
       }
-    }
+      def cloudGroup = metadata.dependencies.content.find { 'Cloud'.equals(it.name) }
+
+      metadata.dependencies.content.remove(cloudGroup)
+      metadata.dependencies.content.add(0, cloudGroup)
+	}
+    builder.build()
   }
 
   private void translateRange(Dependency dependency, CloudProperties cloud) {
@@ -49,7 +49,7 @@ class InitializerService {
        version range, which is adequate in all cases we currently
        support, but might need to be more sophisticated later
       */
-      String lowerVersion = InitializrMetadata.getDefault(cloud.versions)  
+      String lowerVersion = defaultId(cloud.versions)
       VersionRange bootRange = VersionRange.parse(dependency.versionRange)
       cloud.bootVersions.each { bootVersion ->
         if (bootRange.match(Version.parse(bootVersion.id))) {
@@ -72,35 +72,39 @@ class InitializerService {
   }
 
   @Bean
-  ProjectGenerator projectGenerator() {
+  ProjectGenerator projectGenerator(ProjectGenerationMetricsListener metricsListener) {
     def generator = new ProjectGenerator() {
       protected Map initializeModel(ProjectRequest request) {
         Map map = super.initializeModel(request)
-        map.put('springCloudVersion', request.bootVersion ?: InitializrMetadata.getDefault(cloud.versions))
-        map.put('bootVersion', InitializrMetadata.getDefault(cloud.bootVersions))
+        map.put('springCloudVersion', request.bootVersion ?: defaultId(cloud.versions))
+        map.put('bootVersion', defaultId(cloud.bootVersions))
         map
       }
     }
     generator.listeners << metricsListener
     generator
   }
-  
+
+  private static String defaultId(elements) {
+    elements.find{it.default}.id
+  }
+
 }
 
 @ConfigurationProperties('cloud')
 class CloudProperties {
   /**
+   *  When specified, this resource is used to initialize the meta-data used by this instance.
+   */
+  Resource initialMetadata
+  /**
    * The versions of Spring Cloud supported by this service
    */
-  final List<BootVersion> versions = []
+  final List<DefaultMetadataElement> versions = []
   /**
    * The versions of Spring Boot supported by various versions of Spring Cloud
    */
   final List<CloudBootVersion> bootVersions = []
-  /**
-   * The additional dependencies to be added
-   */
-  final List<DependencyGroup> dependencies = []
   /**
    * The group ID for Spring Cloud dependencies
    */
@@ -111,7 +115,7 @@ class CloudProperties {
   String artifactId
 }
 
-class CloudBootVersion extends BootVersion {
+class CloudBootVersion extends DefaultMetadataElement {
   /**
    * The range of versions of Spring Cloud supporting this Boot version
    */
@@ -128,16 +132,16 @@ class CloudController extends MainController {
   @Override
   ProjectRequest projectRequest() {
     def request = new ProjectRequest() {
-      String springCloudVersion
+
       protected addDefaultDependency() {
-		def root = new InitializrMetadata.Dependency()
-		root.id = cloud.artifactId
+        def root = new Dependency()
+        root.id = cloud.artifactId
         root.groupId = cloud.groupId
         root.artifactId = cloud.artifactId
-		resolvedDependencies << root
+        resolvedDependencies << root
       }
     }
-    metadataProvider.get().initializeProjectRequest(request)
+    request.initialize(metadataProvider.get())
     request
   }
 
